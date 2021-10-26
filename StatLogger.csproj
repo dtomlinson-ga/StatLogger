@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyName>StatLogger</AssemblyName>
+		<RootNamespace>StatLogger</RootNamespace>
+		<Version>0.1.0</Version>
+		<TargetFramework>net452</TargetFramework>
+		<EnableHarmony>true</EnableHarmony>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.3.0" />
+	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties manifest_1json__JsonSchema="https://smapi.io/schemas/content-patcher.json" /></VisualStudio></ProjectExtensions>
+
+</Project>

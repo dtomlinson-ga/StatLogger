@@ -1,0 +1,10 @@
+﻿{
+  "Name": "StatLogger",
+  "Author": "Vertigon",
+  "Version": "0.1.0",
+  "Description": "Small tool to detect whenever a player stat is altered.",
+  "UniqueID": "Vertigon.StatLogger",
+  "EntryDll": "StatLogger.dll",
+  "MinimumApiVersion": "3.0.0",
+  "UpdateKeys": [ ]
+}
