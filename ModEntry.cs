@@ -37,7 +37,7 @@ namespace StatLogger
 			PerformHarmonyPatches();
 		}
 
-		/// <summary>Add methods to event hooks.</summary>
+		/// <summary>Dynamically patch setter methods of Stats object.</summary>
 		private void PerformHarmonyPatches()
 		{
 			Harmony harmony = new(ModManifest.UniqueID);
