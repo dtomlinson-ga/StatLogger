@@ -1,5 +1,4 @@
-
-## Stats As Tokens
+## StatLogger
 *by Vertigon*
 
 [GitHub](https://github.com/dtomlinson-ga/StatLogger)
