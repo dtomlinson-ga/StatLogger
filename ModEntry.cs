@@ -25,7 +25,7 @@ namespace StatLogger
 	/// <summary>The mod entry point.</summary>
 	public class ModEntry : Mod
 	{
-
+		public Harmony harmony;
 		public static IMonitor Logger;
 		public List<string> excludedMethods = new() { "set_StepsTaken" };
 
@@ -33,19 +33,71 @@ namespace StatLogger
 		/// <param name="helper" />
 		public override void Entry(IModHelper helper)
 		{
+			harmony = new(ModManifest.UniqueID);
 			Logger = Monitor;
+
 			PerformHarmonyPatches();
+			
+			helper.ConsoleCommands.Add("dump_patches", "Dumps list of all Harmony patches other than those added by StatLogger and SMAPI to the console", (_,_) => CheckForOtherPatches());
+		}
+
+		private void CheckForOtherPatches()
+		{
+			var originalMethods = Harmony.GetAllPatchedMethods();
+
+			foreach (MethodBase method in originalMethods)
+			{
+				var patches = Harmony.GetPatchInfo(method);
+
+				// if patches is null or patches only contains patches by StatLogger and SMAPI
+				if (patches is null || (!patches.Owners.ToList().Any(x => !x.Equals("Vertigon.StatLogger") && !x.Contains("SMAPI"))))
+					continue;
+
+				foreach (var patch in patches.Prefixes)
+				{
+					LogTrace($"Prefix found for {method.Name}");
+					LogTrace("\tindex: " + patch.index);
+					LogTrace("\towner: " + patch.owner);
+					LogTrace("\tpatch method: " + patch.PatchMethod);
+					LogTrace("\tpriority: " + patch.priority);
+					LogTrace("\tbefore: " + string.Join(", ", patch.before));
+					LogTrace("\tafter: " + string.Join(", ", patch.after));
+					LogTrace("");
+				}
+
+				foreach (var patch in patches.Transpilers)
+				{
+					LogTrace($"Transpiler found for {method.Name}");
+					LogTrace("\tindex: " + patch.index);
+					LogTrace("\towner: " + patch.owner);
+					LogTrace("\tpatch method: " + patch.PatchMethod);
+					LogTrace("\tpriority: " + patch.priority);
+					LogTrace("\tbefore: " + string.Join(", ", patch.before));
+					LogTrace("\tafter: " + string.Join(", ", patch.after));
+					LogTrace("");
+				}
+
+				foreach (var patch in patches.Postfixes)
+				{
+					LogTrace($"Postfix found for {method.Name}");
+					LogTrace("\tindex: " + patch.index);
+					LogTrace("\towner: " + patch.owner);
+					LogTrace("\tpatch method: " + patch.PatchMethod);
+					LogTrace("\tpriority: " + patch.priority);
+					LogTrace("\tbefore: " + string.Join(", ", patch.before));
+					LogTrace("\tafter: " + string.Join(", ", patch.after));
+					LogTrace("");
+				}
+			}
 		}
 
 		/// <summary>Dynamically patch setter methods of Stats object.</summary>
 		private void PerformHarmonyPatches()
 		{
-			Harmony harmony = new(ModManifest.UniqueID);
+			List<MethodInfo> methods = typeof(Stats).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.Contains("set")).ToList();
 
 			HarmonyMethod Stats_set_Prefix = new(typeof(ModEntry).GetMethod("Stats_set_Prefix"));
 			HarmonyMethod Stats_set_Postfix = new(typeof(ModEntry).GetMethod("Stats_set_Postfix"));
-
-			List<MethodInfo> methods = typeof(Stats).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).ToList();
 
 			foreach (MethodInfo method in methods)
 			{
@@ -70,38 +122,12 @@ namespace StatLogger
 							LogTrace($"\tSkipped patching {method.Name}");
 						}
 					}
-					catch (System.Exception e)
+					catch (Exception e)
 					{
 						LogTrace($"Encountered exception while attempting to patch {method.Name}: {e}");
 					}
 				}
 			}
-
-			//FieldInfo statDictField = typeof(Stats).GetField("stat_dictionary");
-
-			//methods = statDictField.FieldType.GetMethods().ToList();
-
-			//foreach (MethodInfo method in methods)
-			//{
-			//	LogTrace($"Detected method {method.Name} in {statDictField.Name}.");
-			//	LogTrace($"\tParameters: {string.Join(", ", method.GetParameters().Select(x => $"{x.ParameterType} {x.Name}"))}");
-			//	LogTrace($"\tReturn type: {method.ReturnType}");
-			//}
-
-			//List<PropertyInfo> properties = statDictField.FieldType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).ToList();
-
-			//foreach (PropertyInfo property in properties)
-			//{
-			//	LogTrace($"Detected property {property.PropertyType} {property.Name} in {statDictField.Name}");
-
-			//	if (property.Name.Equals("Item"))
-			//	{
-			//		LogTrace($"\tProperty Get Method: {property.GetGetMethod()}");
-			//		LogTrace($"\tProperty Set Method: {property.GetSetMethod()}");
-			//		LogTrace($"\tProperty Index Parameters: {property.GetIndexParameters()}");
-			//		LogTrace($"\tAccessors: {string.Join(", ", property.GetAccessors(true).Select(x => $"{x.GetType()} {x.Name}"))}");
-			//	}
-			//}
 
 			Type dictType = typeof(Dictionary<string, uint>);
 			MethodInfo setItemMethod = dictType.GetMethod("set_Item");
