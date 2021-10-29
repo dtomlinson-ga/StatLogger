@@ -38,19 +38,22 @@ namespace StatLogger
 
 			PerformHarmonyPatches();
 			
-			helper.ConsoleCommands.Add("dump_patches", "Dumps list of all Harmony patches other than those added by StatLogger and SMAPI to the console", (_,_) => CheckForOtherPatches());
+			helper.ConsoleCommands.Add("dump_patches_other", "Dumps list of all Harmony patches, other than those added by StatLogger and SMAPI, to the console", (_,_) => CheckForOtherPatches());
+			helper.ConsoleCommands.Add("dump_patches_all", "Dumps list of all Harmony patches, including those added by StatLogger and SMAPI, to the console", (_, _) => CheckForOtherPatches(includeOwn: true));
 		}
 
-		private void CheckForOtherPatches()
+		private void CheckForOtherPatches(bool includeOwn = false)
 		{
 			var originalMethods = Harmony.GetAllPatchedMethods();
+
+			LogTrace($"Total patches found: {originalMethods.Count()}\n");
 
 			foreach (MethodBase method in originalMethods)
 			{
 				var patches = Harmony.GetPatchInfo(method);
 
-				// if patches is null or patches only contains patches by StatLogger and SMAPI
-				if (patches is null || (!patches.Owners.ToList().Any(x => !x.Equals("Vertigon.StatLogger") && !x.Contains("SMAPI"))))
+				//if patches is null or patches only contains patches by StatLogger and SMAPI
+				if (patches is null || (!patches.Owners.ToList().Any(x => !x.Equals("Vertigon.StatLogger") && !x.Contains("SMAPI")) && !includeOwn))
 					continue;
 
 				foreach (var patch in patches.Prefixes)
@@ -58,6 +61,7 @@ namespace StatLogger
 					LogTrace($"Prefix found for {method.Name}");
 					LogTrace("\tindex: " + patch.index);
 					LogTrace("\towner: " + patch.owner);
+					LogTrace("\ttarget method: " + method.FullDescription().ToString());
 					LogTrace("\tpatch method: " + patch.PatchMethod);
 					LogTrace("\tpriority: " + patch.priority);
 					LogTrace("\tbefore: " + string.Join(", ", patch.before));
@@ -70,6 +74,7 @@ namespace StatLogger
 					LogTrace($"Transpiler found for {method.Name}");
 					LogTrace("\tindex: " + patch.index);
 					LogTrace("\towner: " + patch.owner);
+					LogTrace("\ttarget method: " + method.FullDescription().ToString());
 					LogTrace("\tpatch method: " + patch.PatchMethod);
 					LogTrace("\tpriority: " + patch.priority);
 					LogTrace("\tbefore: " + string.Join(", ", patch.before));
@@ -82,6 +87,7 @@ namespace StatLogger
 					LogTrace($"Postfix found for {method.Name}");
 					LogTrace("\tindex: " + patch.index);
 					LogTrace("\towner: " + patch.owner);
+					LogTrace("\ttarget method: " + method.FullDescription().ToString());
 					LogTrace("\tpatch method: " + patch.PatchMethod);
 					LogTrace("\tpriority: " + patch.priority);
 					LogTrace("\tbefore: " + string.Join(", ", patch.before));
@@ -178,6 +184,11 @@ namespace StatLogger
 		public static void LogTrace(string message)
 		{
 			Logger.Log(message, LogLevel.Trace);
+		}
+
+		public static void LogError(string message)
+		{
+			Logger.Log(message, LogLevel.Error);
 		}
 	}
 }
